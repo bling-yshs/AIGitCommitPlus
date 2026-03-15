@@ -1,0 +1,14 @@
+[versions]
+jacksonDatabind = "2.17.1"
+
+changelog = "2.5.0"
+intelliJPlatform = "2.11.0"
+kotlin = "2.3.0"
+
+[libraries]
+jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jacksonDatabind" }
+
+[plugins]
+changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
+intelliJPlatform = { id = "org.jetbrains.intellij.platform", version.ref = "intelliJPlatform" }
+kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

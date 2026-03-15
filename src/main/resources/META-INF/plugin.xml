@@ -1,0 +1,29 @@
+<idea-plugin>
+    <id>com.yshs.aicommit</id>
+    <name>AI Git Commit Plus</name>
+    <vendor email="paranoia_zk@yeah.net">HMYDK</vendor>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.vcs</depends>
+    <depends>Git4Idea</depends>
+    <depends>com.intellij.modules.json</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity implementation="com.yshs.aicommit.WelcomeNotification"/>
+        <notificationGroup id="AI Git Commit Plus Notifications" displayType="BALLOON"/>
+        <applicationConfigurable instance="com.yshs.aicommit.config.ApiKeyConfigurable"
+                                 id="aicommit.settings"
+                                 displayName="AI Git Commit Plus"
+                                 groupId="Tools"/>
+        <applicationService serviceImplementation="com.yshs.aicommit.config.ApiKeySettings"/>
+    </extensions>
+
+    <actions>
+        <action id="com.yshs.aicommit.GenerateCommitMessageAction"
+                class="com.yshs.aicommit.GenerateCommitMessageAction"
+                text="Generate AI Commit Message"
+                icon="/icons/git-commit-logo.svg"
+                description="Generate a commit message using AI">
+            <add-to-group group-id="Vcs.MessageActionGroup" anchor="first"/>
+        </action>
+    </actions>
+</idea-plugin>
