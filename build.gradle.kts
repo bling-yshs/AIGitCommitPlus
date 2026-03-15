@@ -110,7 +110,4 @@ tasks {
         gradleVersion = providers.gradleProperty("gradleVersion").get()
     }
 
-    named("buildSearchableOptions") {
-        enabled = false
-    }
 }

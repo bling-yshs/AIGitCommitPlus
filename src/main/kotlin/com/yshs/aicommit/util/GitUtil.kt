@@ -83,7 +83,7 @@ object GitUtil {
         val filteredChanges = includedChanges.filterNot { change ->
             getFilePathFromChange(change)?.let(::shouldExcludeFile) == true
         }
-        val pathsByRepository = linkedMapOf<GitRepository, LinkedHashSet<FilePath>>()
+        val changesByRepository = linkedMapOf<GitRepository, LinkedHashSet<Change>>()
 
         for (change in filteredChanges) {
             val changePaths = getTrackedFilePaths(change)
@@ -96,19 +96,21 @@ object GitUtil {
                 .distinct()
 
             for (repository in repositories) {
-                val repositoryPaths = pathsByRepository.getOrPut(repository) { linkedSetOf() }
-                changePaths
-                    .filter { isPathInsideRepository(it, repository) }
-                    .forEach(repositoryPaths::add)
+                if (changePaths.any { isPathInsideRepository(it, repository) }) {
+                    changesByRepository.getOrPut(repository) { linkedSetOf() }.add(change)
+                }
             }
         }
 
         val diffBuilder = StringBuilder()
-        for ((repository, paths) in pathsByRepository) {
-            if (paths.isEmpty()) {
-                continue
+        for ((repository, changes) in changesByRepository) {
+            for (change in changes) {
+                val paths = getTrackedFilePaths(change).filter { isPathInsideRepository(it, repository) }
+                if (paths.isEmpty()) {
+                    continue
+                }
+                diffBuilder.append(buildTrackedChangeDiff(project, repository, paths))
             }
-            diffBuilder.append(runNativeGitDiff(project, repository, paths.toList()))
         }
         return diffBuilder.toString()
     }
@@ -185,7 +187,21 @@ object GitUtil {
         return paths.values.toList()
     }
 
-    private fun runNativeGitDiff(project: Project, repository: GitRepository, paths: List<FilePath>): String {
+    private fun buildTrackedChangeDiff(project: Project, repository: GitRepository, paths: List<FilePath>): String {
+        val workingTreeDiff = runNativeGitDiff(project, repository, paths, staged = false)
+        if (workingTreeDiff.isNotBlank()) {
+            return workingTreeDiff
+        }
+
+        return runNativeGitDiff(project, repository, paths, staged = true)
+    }
+
+    private fun runNativeGitDiff(
+        project: Project,
+        repository: GitRepository,
+        paths: List<FilePath>,
+        staged: Boolean,
+    ): String {
         if (paths.isEmpty()) {
             return ""
         }
@@ -196,17 +212,20 @@ object GitUtil {
             "Git executable is not configured for project ${project.name}."
         }
 
-        val executable = executableManager.getExecutable(project, File(repository.root.path))
-        val handler = GitLineHandler(project, File(repository.root.path), executable, GitCommand.DIFF, emptyList())
+        val handler = GitLineHandler(project, File(repository.root.path), GitCommand.DIFF)
         handler.setSilent(true)
         handler.addParameters("--no-ext-diff")
+        if (staged) {
+            handler.addParameters("--cached")
+        }
         handler.endOptions()
         handler.addRelativePaths(paths)
 
         val result = Git.getInstance().runCommand(handler)
         if (!result.success()) {
             val errorMessage = result.getErrorOutputAsJoinedString().ifBlank {
-                "git diff failed in ${repository.root.path} with exit code ${result.exitCode}."
+                val diffKind = if (staged) "git diff --cached" else "git diff"
+                "$diffKind failed in ${repository.root.path} with exit code ${result.exitCode}."
             }
             throw IllegalStateException(errorMessage)
         }
