@@ -213,20 +213,6 @@ class ApiKeyConfigurableUI {
             },
             BorderLayout.WEST,
         )
-        labelPanel.add(
-            JLabel("<html><a href='https://github.com/HMYDK/AIGitCommit/discussions/23'>More Prompts ↗</a></html>").apply {
-                cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-                addMouseListener(object : MouseAdapter() {
-                    override fun mouseClicked(e: MouseEvent) {
-                        try {
-                            Desktop.getDesktop().browse(URI("https://github.com/HMYDK/AIGitCommit/discussions/23"))
-                        } catch (_: Exception) {
-                        }
-                    }
-                })
-            },
-            BorderLayout.EAST,
-        )
         panel.add(labelPanel, BorderLayout.NORTH)
 
         val customPromptsPanel = ToolbarDecorator.createDecorator(customPromptsTable)
@@ -361,12 +347,12 @@ class ApiKeyConfigurableUI {
 
         val topPanel = JPanel(BorderLayout())
         topPanel.add(
-            JLabel("<html><a href='https://github.com/HMYDK/AIGitCommit/issues'>Report Bug ↗</a></html>").apply {
+            JLabel("<html><a href='https://github.com/bling-yshs/AIGitCommitPlus/issues'>Report Bug ↗</a></html>").apply {
                 cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
                 addMouseListener(object : MouseAdapter() {
                     override fun mouseClicked(e: MouseEvent) {
                         try {
-                            Desktop.getDesktop().browse(URI("https://github.com/HMYDK/AIGitCommit/issues"))
+                            Desktop.getDesktop().browse(URI("https://github.com/bling-yshs/AIGitCommitPlus/issues"))
                         } catch (_: Exception) {
                         }
                     }

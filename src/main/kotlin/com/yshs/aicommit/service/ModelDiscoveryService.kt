@@ -135,6 +135,19 @@ class ModelDiscoveryService {
         }
 
         @JvmStatic
+        fun normalizeGeminiStreamGenerateContentUrl(url: String, model: String): String {
+            var trimmed = url.trim()
+            val skipVersionSegment = trimmed.endsWith(VERSION_BYPASS_MARKER)
+            if (skipVersionSegment) {
+                trimmed = trimmed.removeSuffix(VERSION_BYPASS_MARKER).trim()
+            }
+
+            val uri = URI.create(trimmed)
+            val basePath = normalizeGeminiBasePath(uri.path, skipVersionSegment)
+            return rebuildUri(uri, "$basePath/models/$model:streamGenerateContent?alt=sse")
+        }
+
+        @JvmStatic
         fun normalizeRequestUrl(client: String, url: String): String {
             if (url.isBlank()) {
                 return ""
@@ -236,15 +249,32 @@ class ModelDiscoveryService {
             return trimmed
         }
 
-        private fun rebuildUri(uri: URI, path: String): String =
-            URI(
+        private fun rebuildUri(uri: URI, pathWithOptionalQuery: String): String {
+            val queryIndex = pathWithOptionalQuery.indexOf('?')
+            val path =
+                if (queryIndex >= 0) {
+                    pathWithOptionalQuery.substring(0, queryIndex)
+                } else {
+                    pathWithOptionalQuery
+                }
+            val query =
+                if (queryIndex >= 0 && queryIndex < pathWithOptionalQuery.lastIndex) {
+                    pathWithOptionalQuery.substring(queryIndex + 1)
+                } else if (queryIndex >= 0) {
+                    ""
+                } else {
+                    null
+                }
+
+            return URI(
                 uri.scheme,
                 uri.userInfo,
                 uri.host,
                 uri.port,
                 path,
-                null,
+                query,
                 null,
             ).toString()
+        }
     }
 }

@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.yshs.aicommit</id>
     <name>AI Git Commit Plus</name>
-    <vendor email="paranoia_zk@yeah.net">HMYDK</vendor>
+    <vendor>bling-yshs</vendor>
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.modules.vcs</depends>
     <depends>Git4Idea</depends>
