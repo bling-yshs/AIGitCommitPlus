@@ -1,12 +1,5 @@
 package com.yshs.aicommit.config
 
-import com.yshs.aicommit.constant.Constants
-import com.yshs.aicommit.service.AIService
-import com.yshs.aicommit.service.CommitMessageService
-import com.yshs.aicommit.service.LastPromptService
-import com.yshs.aicommit.service.ModelDiscoveryService
-import com.yshs.aicommit.util.DialogUtil
-import com.yshs.aicommit.util.PromptDialogUIUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -20,41 +13,22 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.JBColor
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBPasswordField
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.*
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Component
-import java.awt.Cursor
-import java.awt.Desktop
-import java.awt.Dimension
-import java.awt.FlowLayout
-import java.awt.Font
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
-import java.awt.Toolkit
+import com.yshs.aicommit.constant.Constants
+import com.yshs.aicommit.service.AIService
+import com.yshs.aicommit.service.CommitMessageService
+import com.yshs.aicommit.service.LastPromptService
+import com.yshs.aicommit.service.ModelDiscoveryService
+import com.yshs.aicommit.util.DialogUtil
+import com.yshs.aicommit.util.PromptDialogUIUtil
+import java.awt.*
 import java.awt.datatransfer.StringSelection
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.net.URI
-import javax.swing.BoxLayout
-import javax.swing.Icon
-import javax.swing.JButton
-import javax.swing.JComboBox
-import javax.swing.JDialog
-import javax.swing.JLabel
-import javax.swing.JOptionPane
-import javax.swing.JPanel
-import javax.swing.JScrollPane
-import javax.swing.JTextField
-import javax.swing.Timer
-import javax.swing.UIManager
+import javax.swing.*
 import javax.swing.border.Border
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
@@ -133,7 +107,7 @@ class ApiKeyConfigurableUI {
         }
         apiKeyField = JBPasswordField()
         checkConfigButton = JButton("Check").apply {
-            toolTipText = "Validate the current URL, API key and model"
+            toolTipText = "Send a test prompt with the current URL, API key and model"
         }
         refreshModelsButton = JButton(AllIcons.Actions.Refresh).apply {
             toolTipText = "Fetch models from the provider, then choose which ones to add"
@@ -581,34 +555,91 @@ class ApiKeyConfigurableUI {
     private fun checkCurrentConfig() {
         val selectedClient = clientComboBox.selectedItem as String
         persistCurrentProviderConfig(selectedClient)
-        ProgressManager.getInstance().run(object : Task.Modal(null, "Validating Configuration", false) {
+        val testPrompt = showTestPromptDialog() ?: return
+        ProgressManager.getInstance().run(object : Task.Modal(null, "Testing Connection", false) {
             override fun run(indicator: ProgressIndicator) {
                 try {
                     indicator.isIndeterminate = true
-                    indicator.text = "Validating configuration..."
+                    indicator.text = "Testing connection..."
                     val aiService: AIService = CommitMessageService.getAIService(selectedClient)
-                    val validateResPair = aiService.validateConfig(
-                        mapOf(
-                            "url" to apiUrlField.text.trim(),
-                            "module" to currentModuleValue.trim(),
-                            "apiKey" to String(apiKeyField.password),
-                        ),
-                    )
+                    val response = aiService.generateCommitMessage(testPrompt).trim()
                     ApplicationManager.getApplication().invokeLater {
-                        if (validateResPair.left) {
-                            Messages.showInfoMessage(mainPanel, "Configuration validation successful.", "Success")
+                        if (response.isNotBlank()) {
+                            showTestResultDialog(response)
                         } else {
-                            DialogUtil.showErrorDialog(mainPanel, validateResPair.right, DialogUtil.CONFIGURATION_ERROR_TITLE)
+                            Messages.showWarningDialog(
+                                mainPanel,
+                                "The request succeeded, but the model returned empty content.",
+                                "Test Result",
+                            )
                         }
                     }
                 } catch (ex: Exception) {
                     ApplicationManager.getApplication().invokeLater {
-                        Messages.showErrorDialog(mainPanel, "Validation error occurred: ${ex.message}", "Error")
+                        DialogUtil.showErrorDialog(mainPanel, ex.message, DialogUtil.CONFIGURATION_ERROR_TITLE)
                     }
                 }
             }
         })
     }
+
+    private fun showTestPromptDialog(): String? {
+        val textArea = JBTextArea(defaultTestPrompt(), 12, 60).apply {
+            lineWrap = true
+            wrapStyleWord = true
+            font = Font(Font.MONOSPACED, Font.PLAIN, 12)
+            caretPosition = 0
+        }
+
+        val panel = JPanel(BorderLayout(0, 8)).apply {
+            add(
+                JBLabel("Enter the prompt to send for this test. You can edit the default prompt below.").apply {
+                    foreground = JBColor.GRAY
+                },
+                BorderLayout.NORTH,
+            )
+            add(JBScrollPane(textArea).apply { preferredSize = Dimension(720, 260) }, BorderLayout.CENTER)
+        }
+
+        val result =
+            JOptionPane.showConfirmDialog(
+                mainPanel,
+                panel,
+                "Test Prompt",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE,
+            )
+        if (result != JOptionPane.OK_OPTION) {
+            return null
+        }
+
+        return textArea.text.trim().takeIf(String::isNotBlank)
+    }
+
+    private fun showTestResultDialog(response: String) {
+        val textArea = JBTextArea(response, 14, 60).apply {
+            isEditable = false
+            lineWrap = true
+            wrapStyleWord = true
+            font = Font(Font.MONOSPACED, Font.PLAIN, 12)
+            caretPosition = 0
+        }
+
+        JOptionPane.showMessageDialog(
+            mainPanel,
+            JBScrollPane(textArea).apply { preferredSize = Dimension(720, 320) },
+            "Test Result",
+            JOptionPane.INFORMATION_MESSAGE,
+        )
+    }
+
+    private fun defaultTestPrompt(): String =
+        """
+        Please reply with exactly three short lines.
+        Line 1: TEST OK
+        Line 2: provider/model information if available
+        Line 3: a short Chinese sentence
+        """.trimIndent()
 
     private fun createModelListPanel(): JPanel =
         JPanel(BorderLayout(0, 8)).apply {
