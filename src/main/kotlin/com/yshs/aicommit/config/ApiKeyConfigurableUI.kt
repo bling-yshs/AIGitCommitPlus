@@ -50,7 +50,7 @@ class ApiKeyConfigurableUI {
     private lateinit var apiUrlField: JTextField
     private lateinit var apiUrlPreviewLabel: JBLabel
     private lateinit var apiKeyField: JBPasswordField
-    lateinit var customHeadersTextArea: JBTextArea
+    lateinit var customHeadersField: JBTextField
         private set
     private lateinit var checkConfigButton: JButton
     private lateinit var refreshModelsButton: JButton
@@ -108,9 +108,7 @@ class ApiKeyConfigurableUI {
             font = Font(Font.MONOSPACED, Font.PLAIN, 11)
         }
         apiKeyField = JBPasswordField()
-        customHeadersTextArea = JBTextArea(4, 50).apply {
-            lineWrap = true
-            wrapStyleWord = true
+        customHeadersField = JBTextField().apply {
             font = Font(Font.MONOSPACED, Font.PLAIN, 12)
         }
         checkConfigButton = JButton("Check").apply {
@@ -498,7 +496,7 @@ class ApiKeyConfigurableUI {
         val moduleConfig = settings.getModuleConfig(client)
         moduleConfig.url = apiUrlField.text.trim()
         moduleConfig.apiKey = String(apiKeyField.password)
-        moduleConfig.customHeadersJson = customHeadersTextArea.text.trim()
+        moduleConfig.customHeadersJson = customHeadersField.text.trim()
         settings.setSelectedModel(client, currentModuleValue)
     }
 
@@ -507,8 +505,8 @@ class ApiKeyConfigurableUI {
         val moduleConfig = settings.getModuleConfig(client)
         apiUrlField.text = moduleConfig.url.ifBlank { "" }
         apiKeyField.text = moduleConfig.apiKey.ifBlank { "" }
-        customHeadersTextArea.text = moduleConfig.customHeadersJson.ifBlank { "" }
-        customHeadersTextArea.caretPosition = 0
+        customHeadersField.text = moduleConfig.customHeadersJson.ifBlank { "" }
+        customHeadersField.caretPosition = 0
         updateApiUrlPreview()
     }
 
@@ -556,19 +554,7 @@ class ApiKeyConfigurableUI {
      */
     private fun createCustomHeadersPanel(): JPanel =
         JPanel(BorderLayout(0, 4)).apply {
-            add(
-                JBScrollPane(customHeadersTextArea).apply {
-                    preferredSize = Dimension(-1, 86)
-                },
-                BorderLayout.CENTER,
-            )
-            add(
-                JBLabel("Optional JSON object. Leave empty or use {} for no custom headers.").apply {
-                    font = font.deriveFont(Font.PLAIN, 11f)
-                    foreground = JBColor.GRAY
-                },
-                BorderLayout.SOUTH,
-            )
+            add(customHeadersField, BorderLayout.CENTER)
         }
 
     private fun toggleApiKeyVisibility(toggleButton: JButton) {
