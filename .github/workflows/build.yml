@@ -156,8 +156,9 @@ jobs:
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result
         if: ${{ always() }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
+          archive: false
           name: pluginVerifier-result
           path: ${{ github.workspace }}/build/reports/pluginVerifier
 
