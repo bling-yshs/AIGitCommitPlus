@@ -56,7 +56,7 @@ class OpenAIResponsesService : AIService {
 
                 val root = HttpUtil.objectMapper.readTree(payload)
                 when (root.path("type").asText()) {
-                    "response.output_text.delta" -> root.path("delta").asText().takeIf(String::isNotBlank)?.let(onNext)
+                    "response.output_text.delta" -> root.path("delta").textOrEmpty().takeIf(String::isNotEmpty)?.let(onNext)
                     "response.completed" -> onComplete()
                 }
             }
@@ -120,7 +120,7 @@ class OpenAIResponsesService : AIService {
         )
 
     private fun extractText(root: JsonNode): String {
-        root.path("output_text").asText().takeIf(String::isNotBlank)?.let { return it.replace("```", "") }
+        root.path("output_text").textOrEmpty().takeIf(String::isNotBlank)?.let { return it.replace("```", "") }
 
         val output = root.path("output")
         if (output.isArray) {
@@ -131,7 +131,7 @@ class OpenAIResponsesService : AIService {
                 }
                 val builder = StringBuilder()
                 for (part in content) {
-                    val text = part.path("text").asText()
+                    val text = part.path("text").textOrEmpty()
                     if (text.isNotBlank()) {
                         if (builder.isNotEmpty()) {
                             builder.append('\n')
@@ -146,4 +146,10 @@ class OpenAIResponsesService : AIService {
         }
         return ""
     }
+
+    /**
+     * Returns an empty string for missing or explicit JSON null text nodes.
+     */
+    private fun JsonNode.textOrEmpty(): String =
+        if (isMissingNode || isNull) "" else asText()
 }

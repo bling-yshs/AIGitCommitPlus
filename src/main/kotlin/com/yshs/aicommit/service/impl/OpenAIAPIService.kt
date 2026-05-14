@@ -60,8 +60,8 @@ class OpenAIAPIService : AIService {
                 }
 
                 val root = HttpUtil.objectMapper.readTree(payload)
-                val delta = firstArrayElement(root.path("choices"))?.path("delta")?.path("content")?.asText().orEmpty()
-                if (delta.isNotBlank()) {
+                val delta = firstArrayElement(root.path("choices"))?.path("delta")?.path("content")?.textOrEmpty().orEmpty()
+                if (delta.isNotEmpty()) {
                     filter.consume(delta, onNext)
                 }
             }
@@ -118,9 +118,15 @@ class OpenAIAPIService : AIService {
         firstArrayElement(root.path("choices"))
             ?.path("message")
             ?.path("content")
-            ?.asText()
+            ?.textOrEmpty()
             .orEmpty()
             .replace("```", "")
+
+    /**
+     * Returns an empty string for missing or explicit JSON null text nodes.
+     */
+    private fun JsonNode.textOrEmpty(): String =
+        if (isMissingNode || isNull) "" else asText()
 
     private fun validateWithConnection(connection: HttpURLConnection): Pair<Boolean, String> =
         try {
