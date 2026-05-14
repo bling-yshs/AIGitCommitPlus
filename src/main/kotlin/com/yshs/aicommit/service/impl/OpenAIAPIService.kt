@@ -6,6 +6,7 @@ import com.yshs.aicommit.constant.Constants
 import com.yshs.aicommit.service.AIService
 import com.yshs.aicommit.service.ModelDiscoveryService
 import com.yshs.aicommit.util.CommonUtil
+import com.yshs.aicommit.util.HeaderUtil
 import com.yshs.aicommit.util.HttpUtil
 import java.net.HttpURLConnection
 import java.nio.charset.Charset
@@ -18,7 +19,7 @@ class OpenAIAPIService : AIService {
         val settings = ApiKeySettings.getInstance()
         val config = settings.getModuleConfig(Constants.OPENAI)
         val model = settings.getSelectedModel(Constants.OPENAI)
-        val connection = openConnection(config.url, model, config.apiKey, content, false)
+        val connection = openConnection(config, model, content, false)
         return HttpUtil.useConnection(connection) {
             val status = it.responseCode
             val body = HttpUtil.readBody(it, status >= 400)
@@ -38,7 +39,7 @@ class OpenAIAPIService : AIService {
         val settings = ApiKeySettings.getInstance()
         val config = settings.getModuleConfig(Constants.OPENAI)
         val model = settings.getSelectedModel(Constants.OPENAI)
-        val connection = openConnection(config.url, model, config.apiKey, content, true)
+        val connection = openConnection(config, model, content, true)
         val filter = ThinkTagFilter()
 
         try {
@@ -84,27 +85,31 @@ class OpenAIAPIService : AIService {
     override fun validateConfig(config: Map<String, String>): Pair<Boolean, String> =
         validateWithConnection(
             openConnection(
-                config["url"].orEmpty(),
+                ApiKeySettings.ModuleConfig(
+                    url = config["url"].orEmpty(),
+                    apiKey = config["apiKey"].orEmpty(),
+                ),
                 config["module"].orEmpty(),
-                config["apiKey"].orEmpty(),
                 "hi",
                 false,
             ),
         )
 
     private fun openConnection(
-        url: String,
+        config: ApiKeySettings.ModuleConfig,
         model: String,
-        apiKey: String,
         input: String,
         stream: Boolean,
     ): HttpURLConnection =
         HttpUtil.openConnection(
-            url = ModelDiscoveryService.normalizeOpenAIChatUrl(url),
+            url = ModelDiscoveryService.normalizeOpenAIChatUrl(config.url),
             method = "POST",
             accept = if (stream) "text/event-stream" else "application/json",
             contentType = "application/json; charset=UTF-8",
-            headers = mapOf("Authorization" to "Bearer $apiKey"),
+            headers = HeaderUtil.mergeHeaders(
+                mapOf("Authorization" to "Bearer ${config.apiKey}"),
+                config.customHeadersJson,
+            ),
             body = HttpUtil.objectMapper.writeValueAsString(
                 mapOf(
                     "model" to model,

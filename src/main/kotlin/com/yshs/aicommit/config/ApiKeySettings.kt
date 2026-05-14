@@ -47,22 +47,11 @@ class ApiKeySettings : PersistentStateComponent<ApiKeySettings> {
         ensureModuleConfigState()
     }
 
-    fun resolvedCustomPrompts(): MutableList<PromptInfo> {
-        if (customPrompts.isEmpty()) {
-            customPrompts = PromptInfo.defaultPrompts()
-        }
-        return customPrompts
-    }
-
     fun resolvedExcludePatterns(): MutableList<String> {
         if (excludePatterns.isEmpty()) {
             excludePatterns = Constants.defaultExcludePatterns.toMutableList()
         }
         return excludePatterns
-    }
-
-    fun resetToDefaultExcludePatterns() {
-        excludePatterns = Constants.defaultExcludePatterns.toMutableList()
     }
 
     fun isEnableFileExclusion(): Boolean = enableFileExclusion
@@ -107,13 +96,6 @@ class ApiKeySettings : PersistentStateComponent<ApiKeySettings> {
 
     fun getAvailableModels(client: String): MutableList<String> =
         sanitizeModels(getModuleConfig(client).availableModels)
-
-    fun setAvailableModels(client: String, availableModels: List<String>) {
-        if (client.isBlank()) {
-            return
-        }
-        getModuleConfig(client).availableModels = sanitizeModels(availableModels)
-    }
 
     fun addAvailableModel(client: String, model: String) {
         if (client.isBlank() || model.isBlank()) {
@@ -182,6 +164,7 @@ class ApiKeySettings : PersistentStateComponent<ApiKeySettings> {
         var apiKey: String = "",
         var modelId: String = "",
         var selectedModel: String = "",
+        var customHeadersJson: String = "",
         var availableModels: MutableList<String> = mutableListOf(),
         var customModels: MutableList<String> = mutableListOf(),
     ) {

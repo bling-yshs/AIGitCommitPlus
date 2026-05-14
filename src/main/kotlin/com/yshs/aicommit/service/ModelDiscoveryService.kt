@@ -3,6 +3,7 @@ package com.yshs.aicommit.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.yshs.aicommit.config.ApiKeySettings
 import com.yshs.aicommit.constant.Constants
+import com.yshs.aicommit.util.HeaderUtil
 import com.yshs.aicommit.util.HttpUtil
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -28,8 +29,13 @@ class ModelDiscoveryService {
     }
 
     private fun fetchOpenAIModels(config: ApiKeySettings.ModuleConfig): List<String> {
-        val connection = openGetConnection(normalizeOpenAIModelsUrl(config.url))
-        connection.setRequestProperty("Authorization", "Bearer ${config.apiKey}")
+        val connection = openGetConnection(
+            normalizeOpenAIModelsUrl(config.url),
+            HeaderUtil.mergeHeaders(
+                mapOf("Authorization" to "Bearer ${config.apiKey}"),
+                config.customHeadersJson,
+            ),
+        )
         return parseModelIds(connection, "data", "id")
     }
 
@@ -37,13 +43,25 @@ class ModelDiscoveryService {
         val baseUrl = normalizeGeminiModelsUrl(config.url)
         val separator = if ('?' in baseUrl) "&" else "?"
         val endpoint = "$baseUrl${separator}key=${URLEncoder.encode(config.apiKey, StandardCharsets.UTF_8)}"
-        return parseModelIds(openGetConnection(endpoint), "models", "name", "models/")
+        return parseModelIds(
+            openGetConnection(endpoint, HeaderUtil.mergeHeaders(emptyMap(), config.customHeadersJson)),
+            "models",
+            "name",
+            "models/",
+        )
     }
 
     private fun fetchAnthropicModels(config: ApiKeySettings.ModuleConfig): List<String> {
-        val connection = openGetConnection(normalizeAnthropicModelsUrl(config.url))
-        connection.setRequestProperty("x-api-key", config.apiKey)
-        connection.setRequestProperty("anthropic-version", ANTHROPIC_VERSION)
+        val connection = openGetConnection(
+            normalizeAnthropicModelsUrl(config.url),
+            HeaderUtil.mergeHeaders(
+                mapOf(
+                    "x-api-key" to config.apiKey,
+                    "anthropic-version" to ANTHROPIC_VERSION,
+                ),
+                config.customHeadersJson,
+            ),
+        )
         return parseModelIds(connection, "data", "id")
     }
 
@@ -88,12 +106,12 @@ class ModelDiscoveryService {
         require(client in Constants.LLM_CLIENTS) { "Missing configuration for $client" }
     }
 
-    private fun openGetConnection(url: String): HttpURLConnection =
+    private fun openGetConnection(url: String, headers: Map<String, String>): HttpURLConnection =
         HttpUtil.openConnection(
             url = url,
             method = "GET",
             accept = "application/json",
-            headers = emptyMap(),
+            headers = headers,
         )
 
     private fun normalizeOpenAIModelsUrl(url: String): String =

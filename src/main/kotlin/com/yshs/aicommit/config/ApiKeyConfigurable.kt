@@ -2,6 +2,8 @@ package com.yshs.aicommit.config
 
 import com.yshs.aicommit.constant.Constants
 import com.yshs.aicommit.pojo.PromptInfo
+import com.yshs.aicommit.util.HeaderUtil
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.Configurable
 import javax.swing.JComponent
 import javax.swing.table.DefaultTableModel
@@ -24,6 +26,15 @@ class ApiKeyConfigurable : Configurable {
         val currentUi = ui ?: return
         val selectedClient = currentUi.clientComboBox.selectedItem as String
         currentUi.persistCurrentProviderConfig(selectedClient)
+        settings.moduleConfigs.forEach { (client, config) ->
+            try {
+                HeaderUtil.parseCustomHeaders(config.customHeadersJson)
+            } catch (throwable: IllegalArgumentException) {
+                throw ConfigurationException(
+                    "Custom Headers JSON for $client is invalid: ${throwable.message}",
+                )
+            }
+        }
         val selectedModule = currentUi.currentModuleValue
         val commitLanguage = currentUi.languageComboBox.selectedItem as String
 

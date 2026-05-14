@@ -5,6 +5,7 @@ import com.yshs.aicommit.config.ApiKeySettings
 import com.yshs.aicommit.constant.Constants
 import com.yshs.aicommit.service.AIService
 import com.yshs.aicommit.service.ModelDiscoveryService
+import com.yshs.aicommit.util.HeaderUtil
 import com.yshs.aicommit.util.HttpUtil
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -17,7 +18,7 @@ class GeminiService : AIService {
         val settings = ApiKeySettings.getInstance()
         val config = settings.getModuleConfig(Constants.GEMINI)
         val model = settings.getSelectedModel(Constants.GEMINI)
-        val connection = openConnection(config.url, model, config.apiKey, content, false)
+        val connection = openConnection(config, model, content, false)
         return HttpUtil.useConnection(connection) {
             val status = it.responseCode
             val body = HttpUtil.readBody(it, status >= 400)
@@ -40,7 +41,7 @@ class GeminiService : AIService {
         val settings = ApiKeySettings.getInstance()
         val config = settings.getModuleConfig(Constants.GEMINI)
         val model = settings.getSelectedModel(Constants.GEMINI)
-        val connection = openConnection(config.url, model, config.apiKey, content, true)
+        val connection = openConnection(config, model, content, true)
         val streamAccumulator = GeminiStreamAccumulator()
 
         try {
@@ -85,9 +86,11 @@ class GeminiService : AIService {
         try {
             HttpUtil.useConnection(
                 openConnection(
-                    config["url"].orEmpty(),
+                    ApiKeySettings.ModuleConfig(
+                        url = config["url"].orEmpty(),
+                        apiKey = config["apiKey"].orEmpty(),
+                    ),
                     config["module"].orEmpty(),
-                    config["apiKey"].orEmpty(),
                     "hi",
                     false,
                 ),
@@ -103,23 +106,25 @@ class GeminiService : AIService {
         }
 
     private fun openConnection(
-        url: String,
+        config: ApiKeySettings.ModuleConfig,
         model: String,
-        apiKey: String,
         textContent: String,
         stream: Boolean,
     ): HttpURLConnection =
         HttpUtil.openConnection(
             url =
                 if (stream) {
-                    ModelDiscoveryService.normalizeGeminiStreamGenerateContentUrl(url, model)
+                    ModelDiscoveryService.normalizeGeminiStreamGenerateContentUrl(config.url, model)
                 } else {
-                    ModelDiscoveryService.normalizeGeminiGenerateContentUrl(url, model)
+                    ModelDiscoveryService.normalizeGeminiGenerateContentUrl(config.url, model)
                 },
             method = "POST",
             accept = if (stream) "text/event-stream" else "application/json",
             contentType = "application/json",
-            headers = mapOf("x-goog-api-key" to apiKey),
+            headers = HeaderUtil.mergeHeaders(
+                mapOf("x-goog-api-key" to config.apiKey),
+                config.customHeadersJson,
+            ),
             body = HttpUtil.objectMapper.writeValueAsString(
                 mapOf(
                     "contents" to listOf(

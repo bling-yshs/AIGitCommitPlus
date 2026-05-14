@@ -5,6 +5,7 @@ import com.yshs.aicommit.config.ApiKeySettings
 import com.yshs.aicommit.constant.Constants
 import com.yshs.aicommit.service.AIService
 import com.yshs.aicommit.service.ModelDiscoveryService
+import com.yshs.aicommit.util.HeaderUtil
 import com.yshs.aicommit.util.HttpUtil
 import java.net.HttpURLConnection
 import org.apache.commons.lang3.tuple.Pair
@@ -16,7 +17,7 @@ class AnthropicService : AIService {
         val settings = ApiKeySettings.getInstance()
         val config = settings.getModuleConfig(Constants.ANTHROPIC)
         val model = settings.getSelectedModel(Constants.ANTHROPIC)
-        val connection = openConnection(config.url, model, config.apiKey, content, false)
+        val connection = openConnection(config, model, content, false)
         return HttpUtil.useConnection(connection) {
             val status = it.responseCode
             val body = HttpUtil.readBody(it, status >= 400)
@@ -36,7 +37,7 @@ class AnthropicService : AIService {
         val settings = ApiKeySettings.getInstance()
         val config = settings.getModuleConfig(Constants.ANTHROPIC)
         val model = settings.getSelectedModel(Constants.ANTHROPIC)
-        val connection = openConnection(config.url, model, config.apiKey, content, true)
+        val connection = openConnection(config, model, content, true)
 
         try {
             if (connection.responseCode >= 400) {
@@ -83,9 +84,11 @@ class AnthropicService : AIService {
         try {
             HttpUtil.useConnection(
                 openConnection(
-                    config["url"].orEmpty(),
+                    ApiKeySettings.ModuleConfig(
+                        url = config["url"].orEmpty(),
+                        apiKey = config["apiKey"].orEmpty(),
+                    ),
                     config["module"].orEmpty(),
-                    config["apiKey"].orEmpty(),
                     "hi",
                     false,
                 ),
@@ -101,20 +104,22 @@ class AnthropicService : AIService {
         }
 
     private fun openConnection(
-        url: String,
+        config: ApiKeySettings.ModuleConfig,
         model: String,
-        apiKey: String,
         input: String,
         stream: Boolean,
     ): HttpURLConnection =
         HttpUtil.openConnection(
-            url = ModelDiscoveryService.normalizeAnthropicMessagesUrl(url),
+            url = ModelDiscoveryService.normalizeAnthropicMessagesUrl(config.url),
             method = "POST",
             accept = if (stream) "text/event-stream" else "application/json",
             contentType = "application/json; charset=UTF-8",
-            headers = mapOf(
-                "x-api-key" to apiKey,
-                "anthropic-version" to ANTHROPIC_VERSION,
+            headers = HeaderUtil.mergeHeaders(
+                mapOf(
+                    "x-api-key" to config.apiKey,
+                    "anthropic-version" to ANTHROPIC_VERSION,
+                ),
+                config.customHeadersJson,
             ),
             body = HttpUtil.objectMapper.writeValueAsString(
                 mapOf(

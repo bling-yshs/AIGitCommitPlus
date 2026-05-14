@@ -50,6 +50,8 @@ class ApiKeyConfigurableUI {
     private lateinit var apiUrlField: JTextField
     private lateinit var apiUrlPreviewLabel: JBLabel
     private lateinit var apiKeyField: JBPasswordField
+    lateinit var customHeadersTextArea: JBTextArea
+        private set
     private lateinit var checkConfigButton: JButton
     private lateinit var refreshModelsButton: JButton
     private lateinit var addModelButton: JButton
@@ -106,6 +108,11 @@ class ApiKeyConfigurableUI {
             font = Font(Font.MONOSPACED, Font.PLAIN, 11)
         }
         apiKeyField = JBPasswordField()
+        customHeadersTextArea = JBTextArea(4, 50).apply {
+            lineWrap = true
+            wrapStyleWord = true
+            font = Font(Font.MONOSPACED, Font.PLAIN, 12)
+        }
         checkConfigButton = JButton("Check").apply {
             toolTipText = "Send a test prompt with the current URL, API key and model"
         }
@@ -225,7 +232,7 @@ class ApiKeyConfigurableUI {
 
     private fun addCustomPrompt() {
         val promptDialogUI = PromptDialogUIUtil.showPromptDialog(true, null, null)
-        javax.swing.SwingUtilities.invokeLater {
+        SwingUtilities.invokeLater {
             UIManager.put("OptionPane.okButtonText", "OK")
             UIManager.put("OptionPane.cancelButtonText", "Cancel")
             val optionPane = JOptionPane(promptDialogUI.panel, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION)
@@ -259,7 +266,7 @@ class ApiKeyConfigurableUI {
     }
 
     private fun editCustomPrompt(row: Int) {
-        javax.swing.SwingUtilities.invokeLater {
+        SwingUtilities.invokeLater {
             val description = customPromptsTableModel.getValueAt(row, 0) as String
             val content = customPromptsTableModel.getValueAt(row, 1) as String
             ApplicationManager.getApplication().invokeAndWait({
@@ -357,6 +364,8 @@ class ApiKeyConfigurableUI {
         addComponent(panel, createApiUrlPanel(), gbc, 1, 2, 1.0)
         addComponent(panel, JBLabel("API Key:"), gbc, 0, 3, 0.0)
         addComponent(panel, createApiKeyPanel(), gbc, 1, 3, 1.0)
+        addComponent(panel, JBLabel("Custom Headers JSON:"), gbc, 0, 4, 0.0)
+        addComponent(panel, createCustomHeadersPanel(), gbc, 1, 4, 1.0)
 
         val modulePanel = JPanel(BorderLayout(5, 0))
         modulePanel.add(moduleComboBox, BorderLayout.CENTER)
@@ -371,14 +380,14 @@ class ApiKeyConfigurableUI {
                 toolTipText = "Select a model from the list below. Use 'Add Model' or fetch models from the API."
             })
         }
-        addComponent(panel, moduleLabelPanel, gbc, 0, 4, 0.0)
-        addComponent(panel, modulePanel, gbc, 1, 4, 1.0)
+        addComponent(panel, moduleLabelPanel, gbc, 0, 5, 0.0)
+        addComponent(panel, modulePanel, gbc, 1, 5, 1.0)
 
         val modelListPanel = createModelListPanel()
         gbc.gridwidth = 2
         gbc.fill = GridBagConstraints.BOTH
         gbc.weighty = 1.0
-        addComponent(panel, modelListPanel, gbc, 0, 5, 1.0)
+        addComponent(panel, modelListPanel, gbc, 0, 6, 1.0)
         gbc.gridwidth = 1
         gbc.fill = GridBagConstraints.HORIZONTAL
         gbc.weighty = 0.0
@@ -389,13 +398,13 @@ class ApiKeyConfigurableUI {
                 toolTipText = "The language of the generated commit message. Note that the actual output language depends on the LLM model's language capabilities."
             })
         }
-        addComponent(panel, languagePanel, gbc, 0, 6, 0.0)
-        addComponent(panel, languageComboBox, gbc, 1, 6, 1.0)
+        addComponent(panel, languagePanel, gbc, 0, 7, 0.0)
+        addComponent(panel, languageComboBox, gbc, 1, 7, 1.0)
 
         gbc.gridwidth = 2
         gbc.weighty = 1.0
         gbc.fill = GridBagConstraints.BOTH
-        addComponent(panel, JPanel(), gbc, 0, 7, 1.0)
+        addComponent(panel, JPanel(), gbc, 0, 8, 1.0)
         return panel
     }
 
@@ -408,7 +417,7 @@ class ApiKeyConfigurableUI {
         addComponent(panel, JBLabel("Prompt type:"), gbc, 0, 0, 0.0)
         addComponent(panel, promptTypeComboBox, gbc, 1, 0, 1.0)
 
-        val contentPanel = JPanel(java.awt.CardLayout()).apply {
+        val contentPanel = JPanel(CardLayout()).apply {
             preferredSize = Dimension(-1, 300)
             add(customPromptPanel, "CUSTOM_PROMPT")
             add(projectPromptPanel, "PROJECT_PROMPT")
@@ -419,7 +428,7 @@ class ApiKeyConfigurableUI {
         addComponent(panel, contentPanel, gbc, 0, 1, 1.0)
 
         promptTypeComboBox.addActionListener {
-            val cardLayout = contentPanel.layout as java.awt.CardLayout
+            val cardLayout = contentPanel.layout as CardLayout
             if (Constants.CUSTOM_PROMPT == promptTypeComboBox.selectedItem) {
                 cardLayout.show(contentPanel, "CUSTOM_PROMPT")
             } else {
@@ -489,6 +498,7 @@ class ApiKeyConfigurableUI {
         val moduleConfig = settings.getModuleConfig(client)
         moduleConfig.url = apiUrlField.text.trim()
         moduleConfig.apiKey = String(apiKeyField.password)
+        moduleConfig.customHeadersJson = customHeadersTextArea.text.trim()
         settings.setSelectedModel(client, currentModuleValue)
     }
 
@@ -497,6 +507,8 @@ class ApiKeyConfigurableUI {
         val moduleConfig = settings.getModuleConfig(client)
         apiUrlField.text = moduleConfig.url.ifBlank { "" }
         apiKeyField.text = moduleConfig.apiKey.ifBlank { "" }
+        customHeadersTextArea.text = moduleConfig.customHeadersJson.ifBlank { "" }
+        customHeadersTextArea.caretPosition = 0
         updateApiUrlPreview()
     }
 
@@ -536,6 +548,26 @@ class ApiKeyConfigurableUI {
                     addActionListener { toggleApiKeyVisibility(this) }
                 },
                 BorderLayout.EAST,
+            )
+        }
+
+    /**
+     * Creates the JSON editor used for provider-level custom headers.
+     */
+    private fun createCustomHeadersPanel(): JPanel =
+        JPanel(BorderLayout(0, 4)).apply {
+            add(
+                JBScrollPane(customHeadersTextArea).apply {
+                    preferredSize = Dimension(-1, 86)
+                },
+                BorderLayout.CENTER,
+            )
+            add(
+                JBLabel("Optional JSON object. Leave empty or use {} for no custom headers.").apply {
+                    font = font.deriveFont(Font.PLAIN, 11f)
+                    foreground = JBColor.GRAY
+                },
+                BorderLayout.SOUTH,
             )
         }
 
@@ -845,21 +877,13 @@ class ApiKeyConfigurableUI {
             return
         }
 
-        ModelImportDialog(mainPanel, client, models, settings, modelDiscoveryService, Runnable {
+        ModelImportDialog(mainPanel, client, models, settings, modelDiscoveryService) {
             reloadModelComboBox(client)
-        }).show()
+        }.show()
     }
 
     val currentModuleValue: String
         get() = moduleComboBox.selectedItem?.toString()?.trim().orEmpty()
-
-    fun setPromptTypeComboBox(promptTypeComboBox: ComboBox<String>) {
-        this.promptTypeComboBox = promptTypeComboBox
-    }
-
-    fun setModuleComboBox(moduleComboBox: ComboBox<String>) {
-        this.moduleComboBox = moduleComboBox
-    }
 
     private fun createFileExclusionPanel(): JPanel {
         val panel = JPanel(BorderLayout()).apply {
