@@ -67,8 +67,9 @@ jobs:
 
       # Store an already-built plugin as an artifact for downloading
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
+          archive: false
           name: AIGitCommitPlus-${{ steps.plugin.outputs.version }}
           path: ./build/libs/AIGitCommitPlus-${{ steps.plugin.outputs.version }}.jar
 
@@ -110,7 +111,7 @@ jobs:
       # Collect Tests Result of failed tests
       - name: Collect Tests Result
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
@@ -155,7 +156,6 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
         with:
-          archive: false
           name: pluginVerifier-result
           path: ${{ github.workspace }}/build/reports/pluginVerifier
 
