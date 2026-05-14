@@ -65,11 +65,19 @@ jobs:
           PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
         run: ./gradlew publishPlugin
 
+      # Read plugin version
+      - name: Read Plugin Version
+        id: plugin
+        shell: bash
+        run: |
+          VERSION="$(awk -F'= *' '/^pluginVersion[[:space:]]*=/{print $2}' gradle.properties)"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       # Upload an artifact as a release asset
       - name: Upload Release Asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ github.event.release.tag_name }} ./build/distributions/*
+        run: gh release upload ${{ github.event.release.tag_name }} "./build/libs/AIGitCommitPlus-${{ steps.plugin.outputs.version }}.jar"
 
       # Create a pull request
       - name: Create Pull Request
