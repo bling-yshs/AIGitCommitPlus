@@ -1,3 +1,4 @@
+import com.github.javaparser.printer.concretesyntaxmodel.CsmElement.token
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -31,7 +32,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.21.3")
 
     intellijPlatform {
         intellijIdeaCommunity(providers.gradleProperty("platformVersion"))
