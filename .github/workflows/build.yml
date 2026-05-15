@@ -28,6 +28,8 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.plugin.outputs.version }}
     steps:
 
       # Free GitHub Actions Environment Disk Space
@@ -130,6 +132,13 @@ jobs:
       - name: Fetch Sources
         uses: actions/checkout@v6
 
+      # Download the plugin artifact prepared by the build job
+      - name: Download Plugin Artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: AIGitCommitPlus-${{ needs.build.outputs.version }}
+          path: ./build/release-artifacts
+
       # Set up the Java environment for the next steps
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -165,3 +174,7 @@ jobs:
             --draft \
             --title $VERSION \
             --notes-file $RELEASE_NOTE
+
+          gh release upload $VERSION \
+            ./build/release-artifacts/AIGitCommitPlus-$VERSION.jar \
+            --clobber
