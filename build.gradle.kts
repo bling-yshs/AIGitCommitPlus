@@ -5,9 +5,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("java")
-    alias(libs.plugins.kotlin)
-    alias(libs.plugins.intelliJPlatform)
-    alias(libs.plugins.changelog)
+    id("org.jetbrains.kotlin.jvm") version "2.3.0"
+    id("org.jetbrains.intellij.platform") version "2.11.0"
+    id("org.jetbrains.changelog") version "2.5.0"
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -31,7 +31,7 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.jackson.databind)
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.1")
 
     intellijPlatform {
         intellijIdeaCommunity(providers.gradleProperty("platformVersion"))
