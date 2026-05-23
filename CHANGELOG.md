@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- 修改插件 Logo
+
 ## [1.0.3] - 2026-05-23
 
 ### Fixed
