@@ -136,7 +136,7 @@ jobs:
       - name: Download Plugin Artifact
         uses: actions/download-artifact@v6
         with:
-          name: AIGitCommitPlus-${{ needs.build.outputs.version }}
+          name: AIGitCommitPlus-${{ needs.build.outputs.version }}.jar
           path: ./build/release-artifacts
 
       # Set up the Java environment for the next steps
