@@ -18,9 +18,9 @@
 <br>
 
 <!-- Plugin description -->
-AI Git Commit Plus 是一个基于 IntelliJ Platform 的 Git 提交信息生成插件。它会读取当前提交窗口中选中的变更与未跟踪文件内容，构造 prompt 后发送给大语言模型，并将生成结果直接回填到 commit message 输入框。
+AI Git Commit Plus generates Git commit messages from selected changes and untracked files in JetBrains IDEs. It builds a structured prompt, sends it to your configured AI provider, and writes the generated result back into the commit message field.
 
-插件支持 OpenAI Chat Completions、OpenAI Responses、Gemini、Anthropic 及兼容接口，支持流式输出、自定义 Prompt、项目根目录 `commit-prompt.txt`、模型自动发现、文件过滤和最近一次 Prompt 调试查看。
+The plugin supports OpenAI Chat Completions, OpenAI Responses, Gemini, Anthropic, and compatible APIs, with streaming output, custom prompts, project-level commit-prompt.txt, model discovery, file filtering, and recent prompt debugging.
 <!-- Plugin description end -->
 
 ## ✨ 功能特性
