@@ -134,7 +134,7 @@ jobs:
 
       # Download the plugin artifact prepared by the build job
       - name: Download Plugin Artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: AIGitCommitPlus-${{ needs.build.outputs.version }}.jar
           path: ./build/release-artifacts
