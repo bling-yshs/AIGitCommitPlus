@@ -1,26 +1,24 @@
-<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+<svg width="18" height="18" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="120" y1="60" x2="900" y2="960" gradientUnits="userSpaceOnUse">
+    <linearGradient id="bgSmall" x1="120" y1="60" x2="900" y2="960" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#348BF4"/>
       <stop offset="0.45" stop-color="#24AEEB"/>
       <stop offset="1" stop-color="#18D5C5"/>
     </linearGradient>
 
-    <radialGradient id="nodeGlow" cx="35%" cy="28%" r="70%">
+    <radialGradient id="nodeGlowSmall" cx="35%" cy="28%" r="70%">
       <stop offset="0" stop-color="#FFFFFF"/>
       <stop offset="1" stop-color="#F4F4F4"/>
     </radialGradient>
 
-    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+    <filter id="softShadowSmall" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#1477A8" flood-opacity="0.18"/>
     </filter>
   </defs>
 
-  <!-- background, no rounded corners -->
-  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <rect width="1024" height="1024" rx="205" ry="205" fill="url(#bgSmall)"/>
 
-  <!-- main connector lines -->
-  <g fill="none" stroke="#FFFFFF" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" filter="url(#softShadow)">
+  <g fill="none" stroke="#FFFFFF" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" filter="url(#softShadowSmall)">
     <path d="M205 530 H430"/>
     <path d="M430 530
              C505 530 558 510 558 455
@@ -30,15 +28,13 @@
              C558 682 612 714 690 714"/>
   </g>
 
-  <!-- nodes -->
-  <g filter="url(#softShadow)">
-    <circle cx="205" cy="530" r="52" fill="url(#nodeGlow)"/>
-    <circle cx="430" cy="530" r="52" fill="url(#nodeGlow)"/>
-    <circle cx="682" cy="344" r="52" fill="url(#nodeGlow)"/>
-    <circle cx="690" cy="714" r="52" fill="url(#nodeGlow)"/>
+  <g filter="url(#softShadowSmall)">
+    <circle cx="205" cy="530" r="52" fill="url(#nodeGlowSmall)"/>
+    <circle cx="430" cy="530" r="52" fill="url(#nodeGlowSmall)"/>
+    <circle cx="682" cy="344" r="52" fill="url(#nodeGlowSmall)"/>
+    <circle cx="690" cy="714" r="52" fill="url(#nodeGlowSmall)"/>
   </g>
 
-  <!-- sparkle star -->
   <path d="M842 374
            L856 420
            L902 434
@@ -48,9 +44,8 @@
            L782 434
            L828 420 Z"
         fill="#FFFFFF"
-        filter="url(#softShadow)"/>
+        filter="url(#softShadowSmall)"/>
 
-  <!-- small dots -->
   <circle cx="876" cy="513" r="8" fill="#FFFFFF" opacity="0.95"/>
   <circle cx="842" cy="565" r="5" fill="#FFFFFF" opacity="0.9"/>
 </svg>
