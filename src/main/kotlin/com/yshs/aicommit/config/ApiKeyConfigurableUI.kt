@@ -83,6 +83,7 @@ class ApiKeyConfigurableUI {
     var SELECTED_ROW: Int = 0
         private set
     private var activeClient: String = Constants.OpenAI
+    private var isReloadingModelComboBox: Boolean = false
 
     init {
         initComponents()
@@ -307,7 +308,14 @@ class ApiKeyConfigurableUI {
         checkConfigButton.addActionListener { checkCurrentConfig() }
         refreshModelsButton.addActionListener { refreshModels() }
         addModelButton.addActionListener { addCustomModel() }
-        moduleComboBox.addActionListener { reloadModelList(activeClient) }
+        moduleComboBox.addActionListener {
+            if (isReloadingModelComboBox) {
+                return@addActionListener
+            }
+            val selectedModel = moduleComboBox.selectedItem?.toString()?.trim().orEmpty()
+            settings.setSelectedModel(activeClient, selectedModel)
+            reloadModelList(activeClient)
+        }
         copyPromptButton.addActionListener { copyRecentPromptToClipboard() }
         refreshPromptButton.addActionListener { refreshRecentPrompt() }
         tabbedPane.addChangeListener {
@@ -447,24 +455,29 @@ class ApiKeyConfigurableUI {
 
     fun reloadModelComboBox(selectedClient: String?) {
         if (selectedClient.isNullOrBlank()) return
-        moduleComboBox.removeAllItems()
-        val modules = settings.getAvailableModels(selectedClient)
-        modules.forEach { module ->
-            if (module.isNotBlank()) {
-                moduleComboBox.addItem(module)
+        isReloadingModelComboBox = true
+        try {
+            moduleComboBox.removeAllItems()
+            val modules = settings.getAvailableModels(selectedClient)
+            modules.forEach { module ->
+                if (module.isNotBlank()) {
+                    moduleComboBox.addItem(module)
+                }
             }
-        }
 
-        val selectedModel = settings.getSelectedModel(selectedClient)
-        if (selectedModel.isNotBlank() && modules.contains(selectedModel)) {
-            moduleComboBox.selectedItem = selectedModel
-        } else if (modules.isNotEmpty()) {
-            val firstModel = modules[0]
-            settings.setSelectedModel(selectedClient, firstModel)
-            moduleComboBox.selectedItem = firstModel
-        } else {
-            settings.setSelectedModel(selectedClient, "")
-            moduleComboBox.selectedItem = ""
+            val selectedModel = settings.getSelectedModel(selectedClient)
+            if (selectedModel.isNotBlank() && modules.contains(selectedModel)) {
+                moduleComboBox.selectedItem = selectedModel
+            } else if (modules.isNotEmpty()) {
+                val firstModel = modules[0]
+                settings.setSelectedModel(selectedClient, firstModel)
+                moduleComboBox.selectedItem = firstModel
+            } else {
+                settings.setSelectedModel(selectedClient, "")
+                moduleComboBox.selectedItem = ""
+            }
+        } finally {
+            isReloadingModelComboBox = false
         }
         reloadModelList(selectedClient)
     }
