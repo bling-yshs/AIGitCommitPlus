@@ -4,8 +4,6 @@
 
 ## [Unreleased]
 
-## [1.0.3] - 2026-05-23
-
 ### Fixed
 
 - 修复上方模型下拉框切换后，下方 Model List 选中高亮未同步更新的问题
@@ -45,8 +43,7 @@
 - 支持查看最近一次发送给模型的 Prompt
 - 支持首次安装或升级后的欢迎通知与设置引导
 
-[Unreleased]: https://github.com/bling-yshs/AIGitCommitPlus/compare/1.0.3...HEAD
-[1.0.3]: https://github.com/bling-yshs/AIGitCommitPlus/releases/tag/1.0.3
+[Unreleased]: https://github.com/bling-yshs/AIGitCommitPlus/compare/1.0.2...HEAD
 [1.0.2]: https://github.com/bling-yshs/AIGitCommitPlus/releases/tag/1.0.2
 [1.0.1]: https://github.com/bling-yshs/AIGitCommitPlus/commit/62a79469935b3c5cae783b8e38f0b6ac860b18eb
 [1.0.0]: https://github.com/bling-yshs/AIGitCommitPlus/commit/42902275174f85b51bc25ec12690afab795710f7
