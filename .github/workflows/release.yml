@@ -1,5 +1,6 @@
 # GitHub Actions Workflow created for handling the release process based on the draft release prepared with the Build workflow.
 # Running the publishPlugin task requires all the following secrets to be provided: PUBLISH_TOKEN, PRIVATE_KEY, PRIVATE_KEY_PASSWORD, CERTIFICATE_CHAIN.
+# If any publishing secret is missing, the workflow skips JetBrains Marketplace publishing and still keeps release maintenance tasks running.
 # See https://plugins.jetbrains.com/docs/intellij/plugin-signing.html for more information.
 
 name: Release
@@ -9,9 +10,9 @@ on:
 
 jobs:
 
-  # Prepare and publish the plugin to JetBrains Marketplace repository
+  # Prepare release maintenance and optionally publish the plugin to JetBrains Marketplace repository
   release:
-    name: Publish Plugin
+    name: Release Plugin
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -56,8 +57,26 @@ jobs:
 
           ./gradlew patchChangelog --release-note-file=$RELEASE_NOTE
 
+      # Check whether all JetBrains Marketplace publishing secrets are configured
+      - name: Check Publishing Secrets
+        id: publishing_secrets
+        shell: bash
+        env:
+          PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+          CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
+        run: |
+          if [[ -n "$PUBLISH_TOKEN" && -n "$CERTIFICATE_CHAIN" && -n "$PRIVATE_KEY" && -n "$PRIVATE_KEY_PASSWORD" ]]; then
+            echo "ready=true" >> $GITHUB_OUTPUT
+          else
+            echo "ready=false" >> $GITHUB_OUTPUT
+            echo "JetBrains Marketplace publishing is skipped because one or more publishing secrets are missing."
+          fi
+
       # Publish the plugin to JetBrains Marketplace
       - name: Publish Plugin
+        if: ${{ steps.publishing_secrets.outputs.ready == 'true' }}
         env:
           PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
           CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
@@ -75,34 +94,64 @@ jobs:
 
       # Upload an artifact as a release asset
       - name: Upload Release Asset
+        if: ${{ steps.publishing_secrets.outputs.ready == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ github.event.release.tag_name }} "./build/libs/AIGitCommitPlus-${{ steps.plugin.outputs.version }}.jar"
+        run: gh release upload ${{ github.event.release.tag_name }} "./build/libs/AIGitCommitPlus-${{ steps.plugin.outputs.version }}.jar" --clobber
 
-      # Create a pull request
+      # Prepare the next patch version for the post-release pull request
+      - name: Bump Next Plugin Version
+        id: next_version
+        shell: bash
+        run: |
+          CURRENT_VERSION="$(awk -F'= *' '/^pluginVersion[[:space:]]*=/{print $2}' gradle.properties)"
+          BASE_VERSION="${CURRENT_VERSION#v}"
+          BASE_VERSION="${BASE_VERSION%%-*}"
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
+          if [[ ! "$MAJOR" =~ ^[0-9]+$ || ! "$MINOR" =~ ^[0-9]+$ || ! "$PATCH" =~ ^[0-9]+$ ]]; then
+            echo "Unsupported pluginVersion format: $CURRENT_VERSION" >&2
+            exit 1
+          fi
+
+          NEXT_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+          awk -v nextVersion="$NEXT_VERSION" '
+            /^pluginVersion[[:space:]]*=/ {
+              print "pluginVersion = " nextVersion
+              next
+            }
+            { print }
+          ' gradle.properties > gradle.properties.tmp
+          mv gradle.properties.tmp gradle.properties
+
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "next=$NEXT_VERSION" >> $GITHUB_OUTPUT
+
+      # Create a pull request with changelog and next version maintenance changes
       - name: Create Pull Request
-        if: ${{ github.event.release.body != '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ github.event.release.tag_name }}"
-          BRANCH="changelog-update-$VERSION"
-          LABEL="release changelog"
+          NEXT_VERSION="${{ steps.next_version.outputs.next }}"
+          BRANCH="post-release-update-$VERSION"
+          LABEL="release maintenance"
 
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
 
           git checkout -b $BRANCH
-          git commit -am "Changelog update - $VERSION"
+          git add CHANGELOG.md gradle.properties
+          git commit -m "Post-release update - $VERSION"
           git push --set-upstream origin $BRANCH
 
           gh label create "$LABEL" \
-            --description "Pull requests with release changelog update" \
+            --description "Pull requests with release maintenance updates" \
             --force \
             || true
 
           gh pr create \
-            --title "Changelog update - \`$VERSION\`" \
-            --body "Current pull request contains patched \`CHANGELOG.md\` file for the \`$VERSION\` version." \
+            --title "Post-release update - \`$VERSION\`" \
+            --body "Current pull request contains release maintenance changes for \`$VERSION\`, including changelog updates when release notes are available and bumping \`pluginVersion\` to \`$NEXT_VERSION\`." \
             --label "$LABEL" \
             --head $BRANCH

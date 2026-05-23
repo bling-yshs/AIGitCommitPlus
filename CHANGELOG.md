@@ -4,6 +4,19 @@
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-05-23
+
+### Fixed
+
+- 修复上方模型下拉框切换后，下方 Model List 选中高亮未同步更新的问题
+
+### Changed
+
+- 发布流程支持在 release 后自动创建维护 PR，将 `pluginVersion` 更新到下一个 patch 版本
+- 发布到 JetBrains Marketplace 前会检测发布密钥，未配置完整时自动跳过商店发布流程
+
+## [1.0.2] - 2026-05-23
+
 ### Changed
 
 - 完善中文 README，补充插件说明、配置方式与构建指南
@@ -32,6 +45,8 @@
 - 支持查看最近一次发送给模型的 Prompt
 - 支持首次安装或升级后的欢迎通知与设置引导
 
-[Unreleased]: https://github.com/bling-yshs/AIGitCommitPlus/compare/62a79469935b3c5cae783b8e38f0b6ac860b18eb...HEAD
+[Unreleased]: https://github.com/bling-yshs/AIGitCommitPlus/compare/1.0.3...HEAD
+[1.0.3]: https://github.com/bling-yshs/AIGitCommitPlus/releases/tag/1.0.3
+[1.0.2]: https://github.com/bling-yshs/AIGitCommitPlus/releases/tag/1.0.2
 [1.0.1]: https://github.com/bling-yshs/AIGitCommitPlus/commit/62a79469935b3c5cae783b8e38f0b6ac860b18eb
 [1.0.0]: https://github.com/bling-yshs/AIGitCommitPlus/commit/42902275174f85b51bc25ec12690afab795710f7
