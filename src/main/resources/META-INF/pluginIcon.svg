@@ -1,22 +1,56 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-    <defs>
-        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#3498db;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#2ecc71;stop-opacity:1" />
-        </linearGradient>
-    </defs>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="60" x2="900" y2="960" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#348BF4"/>
+      <stop offset="0.45" stop-color="#24AEEB"/>
+      <stop offset="1" stop-color="#18D5C5"/>
+    </linearGradient>
 
-    <!-- 背景 -->
-    <rect x="0" y="0" width="100" height="100" rx="20" ry="20" fill="url(#grad)" />
+    <radialGradient id="nodeGlow" cx="35%" cy="28%" r="70%">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F4F4F4"/>
+    </radialGradient>
 
-    <!-- 字母 A，同时暗示 Git 分支 -->
-    <path d="M25 75 L50 25 L75 75" fill="none" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
-    <line x1="37.5" y1="55" x2="62.5" y2="55" stroke="white" stroke-width="8" stroke-linecap="round" />
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#1477A8" flood-opacity="0.18"/>
+    </filter>
+  </defs>
 
-    <!-- 字母 I，同时作为 Git 主干 -->
-    <line x1="50" y1="25" x2="50" y2="75" stroke="white" stroke-width="8" stroke-linecap="round" />
+  <!-- background, no rounded corners -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
 
-    <!-- 代表消息的圆点 -->
-    <circle cx="50" cy="75" r="6" fill="white" />
+  <!-- main connector lines -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" filter="url(#softShadow)">
+    <path d="M205 530 H430"/>
+    <path d="M430 530
+             C505 530 558 510 558 455
+             C558 390 606 344 682 344"/>
+    <path d="M430 530
+             C505 530 558 552 558 615
+             C558 682 612 714 690 714"/>
+  </g>
+
+  <!-- nodes -->
+  <g filter="url(#softShadow)">
+    <circle cx="205" cy="530" r="52" fill="url(#nodeGlow)"/>
+    <circle cx="430" cy="530" r="52" fill="url(#nodeGlow)"/>
+    <circle cx="682" cy="344" r="52" fill="url(#nodeGlow)"/>
+    <circle cx="690" cy="714" r="52" fill="url(#nodeGlow)"/>
+  </g>
+
+  <!-- sparkle star -->
+  <path d="M842 374
+           L856 420
+           L902 434
+           L856 448
+           L842 494
+           L828 448
+           L782 434
+           L828 420 Z"
+        fill="#FFFFFF"
+        filter="url(#softShadow)"/>
+
+  <!-- small dots -->
+  <circle cx="876" cy="513" r="8" fill="#FFFFFF" opacity="0.95"/>
+  <circle cx="842" cy="565" r="5" fill="#FFFFFF" opacity="0.9"/>
 </svg>
