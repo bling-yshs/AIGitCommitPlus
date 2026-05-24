@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-05-24
+
 ### Changed
 
 - 修改插件 Logo
@@ -49,7 +51,8 @@
 - 支持查看最近一次发送给模型的 Prompt
 - 支持首次安装或升级后的欢迎通知与设置引导
 
-[Unreleased]: https://github.com/bling-yshs/AIGitCommitPlus/compare/1.0.3...HEAD
+[Unreleased]: https://github.com/bling-yshs/AIGitCommitPlus/compare/1.0.4...HEAD
+[1.0.4]: https://github.com/bling-yshs/AIGitCommitPlus/compare/1.0.3...1.0.4
 [1.0.3]: https://github.com/bling-yshs/AIGitCommitPlus/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/bling-yshs/AIGitCommitPlus/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/bling-yshs/AIGitCommitPlus/compare/1.0.0...1.0.1
