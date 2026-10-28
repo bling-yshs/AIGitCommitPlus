@@ -27,7 +27,7 @@ jobs:
   # Prepare the environment and build the plugin
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.plugin.outputs.version }}
     steps:
@@ -80,7 +80,7 @@ jobs:
   verify:
     name: Verify plugin
     needs: [ build ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
 
       # Free GitHub Actions Environment Disk Space
@@ -126,7 +126,7 @@ jobs:
     name: Release draft
     if: github.event_name != 'pull_request'
     needs: [ build, verify ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
