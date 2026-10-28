@@ -24,7 +24,7 @@ object HeaderUtil {
             return emptyMap()
         }
 
-        return root.fields().asSequence()
+        return root.properties()
             .associate { (key, value) -> key to headerValueToString(value) }
     }
 
