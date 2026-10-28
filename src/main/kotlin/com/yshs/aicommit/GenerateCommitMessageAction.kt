@@ -10,12 +10,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.vcs.commit.AbstractCommitWorkflowHandler
@@ -48,7 +50,7 @@ class GenerateCommitMessageAction : AnAction() {
         }
 
         val commitMessage = e.getData(VcsDataKeys.COMMIT_MESSAGE_CONTROL) as? CommitMessage ?: return
-        val commitWorkflowHandler = e.getData(VcsDataKeys.COMMIT_WORKFLOW_HANDLER) as? AbstractCommitWorkflowHandler<*, *>
+        val commitWorkflowHandler = getCommitWorkflowHandler(e, project)
         if (commitWorkflowHandler == null) {
             IdeaDialogUtil.handleNoChangesSelected(project)
             return
@@ -130,6 +132,18 @@ class GenerateCommitMessageAction : AnAction() {
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    /**
+     * 平台只在 commit 面板处于激活状态时才往 DataContext 里放 COMMIT_WORKFLOW_HANDLER，
+     * 某些时机（项目刚打开、提交模式切换、工具窗口重新挂载等）会拿到 null，
+     * 此时回退到项目级的 ChangesViewWorkflowManager 获取非模态提交面板的 handler。
+     */
+    private fun getCommitWorkflowHandler(e: AnActionEvent, project: Project): AbstractCommitWorkflowHandler<*, *>? {
+        (e.getData(VcsDataKeys.COMMIT_WORKFLOW_HANDLER) as? AbstractCommitWorkflowHandler<*, *>)?.let { return it }
+        val fallback = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
+        thisLogger().info("COMMIT_WORKFLOW_HANDLER missing in DataContext (place=${e.place}), fallback handler=$fallback")
+        return fallback
+    }
 
     private fun startIconAnimation(event: AnActionEvent) {
         iconAnimationTimer?.stop()
